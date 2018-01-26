@@ -37,7 +37,7 @@ object frmBowlingGame: TfrmBowlingGame
       'Note: Scoring not completed.'
       'It'#39's not whether you win or lose, it'#39's how you play the game...')
     ScrollBars = ssBoth
-    TabOrder = 0
+    TabOrder = 3
   end
   object btnNewGame: TButton
     Left = 462
@@ -46,7 +46,7 @@ object frmBowlingGame: TfrmBowlingGame
     Height = 25
     Anchors = [akTop, akRight]
     Caption = 'New &Game'
-    TabOrder = 1
+    TabOrder = 0
     OnClick = btnNewGameClick
   end
   object gbAddPlayer: TGroupBox
@@ -57,7 +57,7 @@ object frmBowlingGame: TfrmBowlingGame
     Anchors = [akTop, akRight]
     Caption = 'Add Player:'
     Enabled = False
-    TabOrder = 2
+    TabOrder = 1
     OnExit = gbAddPlayerExit
     object edAddPlayer: TLabeledEdit
       Left = 11
@@ -87,7 +87,7 @@ object frmBowlingGame: TfrmBowlingGame
     Anchors = [akTop, akRight]
     Caption = 'Scoring:'
     Enabled = False
-    TabOrder = 3
+    TabOrder = 2
     object Label2: TLabel
       Left = 13
       Top = 27
@@ -120,6 +120,7 @@ object frmBowlingGame: TfrmBowlingGame
       Width = 75
       Height = 25
       Caption = 'Add &Score'
+      Default = True
       TabOrder = 2
       OnClick = btnAddScoreClick
     end

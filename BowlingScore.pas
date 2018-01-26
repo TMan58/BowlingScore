@@ -61,7 +61,8 @@ begin
     NoPins := StrToIntDef(edNoPins.Text, -1);
     if (NoPins=-1) then
     begin
-      edNoPins.Text := '';
+      edNoPins.Text := 'Number please';
+      edNoPins.SelectAll;
     end
     else
     begin
@@ -78,6 +79,7 @@ begin
           else
             cbxPlayers.ItemIndex := cbxPlayers.ItemIndex+1;
         end;
+        SendMessage(Memo1.Handle, EM_LINESCROLL, 0,Memo1.Lines.Count);
         FocusControl(edNoPins);
       end;
     end;

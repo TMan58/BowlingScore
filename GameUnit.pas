@@ -29,12 +29,17 @@ type
     // read up on scoring there are two bonus rolls on a strike
     // and one bonus roll on a spare.
     // need more states
-  TFrameState = (fsFirstRoll, fsSecondRoll, fsBonusRoll, fsSpare, fsStrike, fsOpen);
 
+    // fsDoubleStrikeBonusRoll = two strikes in a row
+  TGameState = (fsFirstRoll, fsSecondRoll, fsOpen, fsSpareBonusRoll, fsSpare,
+                   fsStrikeBonusFirstRoll, fsStrikeBonusSecondRoll, fsStrike,
+                   fsDoubleStrikeBonusRoll);
+  TFrameState = fsFirstRoll..fsStrike;
+  TRoll = (trFirst=1, trSecond);
   TFrame = class
   private
     FState: TFrameState;
-    FTotal: Integer;
+    FFrameTotal: Integer;
     // FRoll Each frame contains two rolls
     // Two rolls for a total of ten for a Spare
     // or 10 on the first roll is a Strike
@@ -43,30 +48,41 @@ type
     // after reading the link above about scoring, i should
     // probably keep track of 4 rolls
     // a spare gets 1 Bonus roll
-    // a strike get 2 Bonus rolls 
+    // a strike get 2 Bonus rolls
     FRoll: array[1..2] of Integer;
-    procedure UpdateState;
+    FBonusRoll: array[1..2] of Integer;
+    function GetRoll(Roll: TRoll): Integer;
+    procedure SetState(AState: TFrameState);
+    function GetState: TFrameState;
     function IsCurrentFrameComplete: Boolean;
-    procedure ValidateNoPinsAdded(PinsToAdd: Integer);
     procedure TotalUpFrame;
-    function GetTotal: Integer;
+    function GetFrameTotal: Integer;
   public
     constructor Create;
-    procedure AddRoll(NoPins: Integer);
+    procedure AddRoll(AState: TFrameState; NoPins: Integer);
     function GetScore: String;
-    property State: TFrameState read FState;
-    property Total: Integer read GetTotal;
+    property Roll[Roll: TRoll]: Integer read GetRoll;
+    property State: TFrameState read GetState write SetState;
+    property FrameTotal: Integer read GetFrameTotal;
     property CurrentFrameCompleted: Boolean read IsCurrentFrameComplete;
   end;
 
   TFrames = class(TObjectList)
     private
-      function GetState(frame: Integer): TFrameState;
+      FGameState: TGameState;
+      function GetFrameState(Index: Integer): TFrameState;
+      function GetFrameStateStr(Index: Integer): String;
+      // To pass or not to pass the frame?
+      //procedure ValidateNoPinsToBeAdded(AFrame: TFrame; PinsToAdd: Integer);
+      //function UpdateFrameState(AFrame: TFrame): TFrameState;
       function IsCurrentFrameComplete: Boolean;
     public
       function AddRoll(NoPins: Integer): Integer; // return frame;
-      function GetFrameScore(Index: Integer): String;
-    property FrameState[frame: Integer]: TFrameState read GetState;
+      function GetGameState: String;
+      function GetFrameStats(Index: Integer): String;
+      function GetFrameTotal(Index: Integer): Integer;
+      function GetAllFrameStats: String;
+    property FrameState[frame: Integer]: TFrameState read GetFrameState;
     property CurrentFrameCompleted: Boolean read IsCurrentFrameComplete;
   end;
 
@@ -95,108 +111,115 @@ type
   constructor TFrame.Create;
   begin
     inherited;
-     FillChar(FRoll,SizeOf(FRoll),0);
+    FillChar(FRoll,SizeOf(FRoll),0);
   end;
 
-  procedure TFrame.UpdateState;
+  function TFrame.GetRoll(Roll: TRoll): Integer;
   begin
-    if FState in [fsSpare, fsStrike, fsOpen] then
-      exit; // final state.
-    case FState of
-      fsFirstRoll:
-        begin
-          if FRoll[1]=10 then
-            FState := fsBonusRoll
-          else
-            FState := fsSecondRoll;
-        end;
-      fsSecondRoll:
-        begin
-          if FRoll[1]+FRoll[2]=10 then
-            FState := fsSpare
-          else
-            FState := fsOpen;
-        end;
-      fsBonusRoll: FState := fsStrike;
-    end;
+    result := FRoll[Ord(Roll)];
   end;
 
+  Procedure TFrame.SetState(AState: TFrameState);
+  begin
+    FState := AState;
+  end;
+
+  function TFrame.GetState: TFrameState;
+  begin
+    result := FState;
+  end;
   function TFrame.IsCurrentFrameComplete: Boolean;
   begin
     result := FState in [fsSpare, fsStrike, fsOpen];
   end;
 
-  procedure TFrame.ValidateNoPinsAdded(PinsToAdd: Integer);
-  var
-    bOk: Boolean;
-  begin
-    bOk := (PinsToAdd<=10) AND (PinsToAdd>=0);
-    if bOk then
-
-      case FState of
-        fsFirstRoll: ;
-        fsSecondRoll: bOk := FRoll[1]+PinsToAdd <=10;
-        fsBonusRoll: ;
-        fsSpare: ;
-        fsStrike: ;
-        fsOpen: ;
-      end;
-    if NOT bOk then
-      raise Exception.CreateFmt('%d for the number of pins out of range', [PinsToAdd]);
-  end;
   // FRoll Each frame contains two rolls
   // Two rolls for a total of ten for a Spare
   // or 10 on the first roll is a Strike
   // in which case the second roll is a StrikeBonus
-  procedure TFrame.AddRoll(NoPins: Integer);
+  procedure TFrame.AddRoll(AState: TFrameState; NoPins: Integer);
   begin
-    ValidateNoPinsAdded(NoPins);
-    case FState of
+//    ValidateNoPinsAdded(NoPins);
+    case AState of
       fsFirstRoll: FRoll[1] := NoPins;
       fsSecondRoll: FRoll[2] := NoPins;
-      fsSpare: exit;
-      fsBonusRoll: FRoll[2] := NoPins;
-      fsStrike: exit;
-      fsOpen: exit;
+      fsOpen: ;
+      fsSpare: ;
+      fsSpareBonusRoll: FBonusRoll[1] := NoPins;
+      fsStrike: ;
+      fsStrikeBonusFirstRoll: FBonusRoll[1] := NoPins;
+      fsStrikeBonusSecondRoll: FBonusRoll[2] := NoPins;
     end;
-    UpdateState;
+    TotalUpFrame;
+    //UpdateState;
   end;
 
   procedure TFrame.TotalUpFrame;
   begin
-    FTotal := -1;
-    // not implemented yet
-    // read up on scoring there are two bonus rolls on a strike
-    // and one bonus roll on a spare.
-    // need more states
-   raise Exception.Create('Total Up Frame not implemented yet');
+    FFrameTotal := FRoll[1]+FRoll[2]+FBonusROll[1]+FBonusRoll[2];
   end;
 
-  function TFrame.GetTotal: Integer;
+  function TFrame.GetFrameTotal: Integer;
   begin
    // not implemented yet
-   result := FTotal;
-   raise Exception.Create('GetTotal not implemented yet');
+   result := FFrameTotal;
   end;
 
   function TFrame.GetScore: String;
   begin
-    Result := Format('FirstRoll: %d%sSecondRoll: %d%s'+
+
+    result := Format('FirstRoll: %d%sSecondRoll: %d%s'+
+                      'BonusRoll 1: %d%sBonusRoll 2: %d%s'+
+                      'FrameTotal: %d%s'+
                       'State: %s%s',
                         [FRoll[1], cCrLf, FRoll[2], cCrLf,
+                        FBonusRoll[1], cCrLf, FBonusRoll[2], cCrLf,
+                        FFrameTotal, cCrLf,
                         GetEnumName(TypeInfo(TFrameState), Ord(FState)), cCrLf]);
   end;
 
-  function TFrames.GetState(frame: Integer): TFrameState;
+  function TFrames.GetGameState: String;
   begin
-    result := (Items[frame] as TFrame).State;
+    result := GetEnumName(TypeInfo(TGameState), Ord(FGameState));
   end;
 
-  function TFrames.GetFrameScore(Index: integer): String;
+  function TFrames.GetFrameState(Index: Integer): TFrameState;
+  begin
+    result := (Items[Index] as TFrame).State;
+  end;
+
+  function TFrames.GetFrameStateStr(Index: Integer): String;
+  begin
+    result := GetEnumName(TypeInfo(TFrameState), Ord(GetFrameState(Index)));
+  end;
+
+  function TFrames.GetFrameStats(Index: integer): String;
   begin
     result := (Items[Index] as TFrame).GetScore;
   end;
 
+  function TFrames.GetFrameTotal(Index: Integer): Integer;
+  begin
+    result := (Items[Index] as TFrame).GetFrameTotal;
+  end;
+
+  function TFrames.GetAllFrameStats: String;
+  var
+    t: integer;
+    TotalScore: Integer;
+  begin
+    TotalScore := 0;
+    for t := 0 to Count - 1 do
+      begin
+        result := Format('%sPlayer state: %s%sFrame: %d%s%s',
+                      [result, GetFrameStateStr(t), cCrLf, //  GetGameState, cCrLf,
+                        t, cCrLf,
+                        GetFrameStats(t)]);
+        TotalScore := TotalScore+GetFrameTotal(t);
+        result := Format('%sTotal score: %d%s%s', [result, TotalScore,
+                              cCrLf, cCrLf]);
+      end;
+  end;
   function TFrames.IsCurrentFrameComplete: BOolean;
   begin
     result := (Items[Count-1] as TFrame).CurrentFrameCompleted;
@@ -206,21 +229,110 @@ type
   var
     Frame: TFrame;
   begin
-    if Count = 0 then
+    if (Count = 0) OR (FGameState in [fsOpen, fsDoubleStrikeBonusRoll]) then
+    begin
+      if (Count=0) OR (FGameState=fsOpen) then
+        FGameState := fsFirstRoll;
       Add(TFrame.Create);
+    end;
     Frame := Items[Pred(Count)] as TFrame;
-    if Frame.State in [fsSpare, fsStrike, fsOpen] then
-    begin
-      Add(TFrame.Create);
-      Frame := Items[Pred(Count)] as TFrame;
+    if ((NoPins>10) OR (NoPins<0))
+      OR ((Frame.State=fsSecondRoll) AND (Frame.Roll[trFirst]+NoPins >10)) then
+        raise Exception.CreateFmt('%d for the number of pins out of range', [NoPins]);
+
+    case FGameState of
+      fsFirstRoll, fsSecondRoll:
+          begin
+            Frame.AddRoll(FGameState, NoPins);
+          end;
+      fsSpareBonusRoll, fsStrikeBonusFirstRoll:
+          begin
+            Frame.AddRoll(FGameState, NoPins);
+
+            Add(TFrame.Create);
+            Frame := Items[Pred(Count)] as TFrame;
+            Frame.AddRoll(fsFirstRoll, NoPins);
+          end;
+      fsStrikeBonusSecondRoll:
+        begin
+          Frame.AddRoll(fsSecondRoll, NoPins);
+          (Items[Count-2] as TFrame).AddRoll(fsStrikeBonusSecondRoll, NoPins);
+        end;
+      // two strikes in a row
+      fsDoubleStrikeBonusRoll:
+        begin
+          Frame.AddRoll(fsFirstRoll, NoPins);
+          (Items[Count-2] as TFrame).AddRoll(fsStrikeBonusFirstRoll, NoPins);
+          (Items[Count-3] as TFrame).AddRoll(fsStrikeBonusSecondRoll, NoPins);
+        end;
     end;
-    if Frame.State=fsBonusRoll then
-    begin
-      Frame.AddRoll(NoPins);
-      Add(TFrame.Create);
-      Frame := Items[Pred(Count)] as TFrame;
+    // should i put separeate procedure
+    case FGameState of
+      fsFirstRoll:
+        begin
+          if Frame.Roll[trFirst]=10 then
+            FGameState := fsStrikeBonusFirstRoll
+          else
+            FGameState := fsSecondRoll;
+          Frame.State := FGameState;
+        end;
+      fsSecondRoll:
+        begin
+          if Frame.Roll[trFirst]+Frame.Roll[trSecond]=10 then
+            FGameState := fsSpareBonusRoll
+          else
+            FGameState := fsOpen;
+          Frame.State := FGameState;
+        end;
+      fsSpareBonusRoll:
+        begin
+          if Frame.Roll[trFirst]=10 then
+            FGameState := fsStrikeBonusFirstRoll
+          else
+            FGameState := fsSecondRoll;
+          Frame.State := FGameState;
+          (Items[Count-2] as TFrame).State := fsSpare;
+        end;
+      fsStrikeBonusFirstRoll:
+        begin
+          if Frame.Roll[trFirst]=10 then
+          begin
+            Frame.State := fsStrikeBonusFirstRoll;
+            FGameState := fsDoubleStrikeBonusRoll;
+          end
+          else
+          begin
+            FGameState := fsStrikeBonusSecondRoll;
+            Frame.State := fsSecondRoll;
+          end;
+          (Items[Count-2] as TFrame).State := fsStrikeBonusSecondRoll;
+        end;
+      fsStrikeBonusSecondRoll:
+        begin
+          if Frame.Roll[trFirst]+Frame.Roll[trSecond]=10 then
+            FGameState := fsSpareBonusRoll
+          else
+            FGameState := fsOpen;
+          Frame.State := FGameState;
+          (Items[Count-2] as TFrame).State := fsStrike;
+        end;
+      fsDoubleStrikeBonusRoll:
+        begin
+          if Frame.Roll[trFirst]=10 then
+          begin
+            Frame.State := fsStrikeBonusFirstRoll;
+            FGameState := fsDoubleStrikeBonusRoll
+          end
+          else
+          begin
+            FGameState := fsStrikeBonusSecondRoll;
+            Frame.State := fsSecondRoll;
+          end;
+          (Items[Count-2] as TFrame).State := fsStrikeBonusSecondRoll;
+          (Items[Count-3] as TFrame).State := fsStrike;
+        end;
     end;
-    Frame.AddRoll(NoPins);
+
     result := Count;
   end;
 
@@ -254,16 +366,12 @@ type
   function TPlayers.GetPlayerScore(const Name: String): String;
   var
     Frames: TFrames;
-    t: integer;
   begin
     result := '';
     if IndexOf(Name) = -1 then
       raise Exception.CreateFmt('Player: [%s] does not exist.', [Name]);
     Frames := Objects[IndexOf(Name)] as TFrames;
-    for t := 0 to Frames.Count - 1 do
-      begin
-        result := Format('%sFrame: %d%s%s%s', [result, Succ(t), cCrLf, Frames.GetFrameScore(t), cCrLf]);
-      end;
+    result := Frames.GetAllFrameStats;
   end;
 
   function TPlayers.GetAllPlayersScore;
