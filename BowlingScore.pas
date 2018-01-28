@@ -19,13 +19,20 @@ type
     Label2: TLabel;
     edNoPins: TLabeledEdit;
     btnAddScore: TButton;
+    btGetAllStats: TButton;
+    cbxRandom: TCheckBox;
     procedure btnNewGameClick(Sender: TObject);
     procedure btnAddPlayerClick(Sender: TObject);
     procedure btnAddScoreClick(Sender: TObject);
     procedure gbAddPlayerExit(Sender: TObject);
+    procedure btGetAllStatsClick(Sender: TObject);
+    procedure edAddPlayerEnter(Sender: TObject);
+    procedure edNoPinsEnter(Sender: TObject);
   private
     { Private declarations }
     ATSBowlingGame: IBowlingGame;
+    procedure AdvancePlayer;
+    procedure IsGameOver;
   public
     { Public declarations }
   end;
@@ -55,7 +62,35 @@ end;
 procedure TfrmBowlingGame.btnAddScoreClick(Sender: TObject);
 var
   NoPins: Integer;
+  bDone: Boolean;
+  iTry: Integer;
 begin
+  gbAddPlayer.Enabled := False;
+  if cbxRandom.Checked then
+  begin
+    bDone := False;
+    repeat
+    Inc(iTry);
+    NoPins := 1+Random(10);
+    try
+        ATSBowlingGame.AddRoll(cbxPlayers.Text, NoPins);
+        edNoPins.Text := '';
+        Memo1.Lines.Add(ATSBowlingGame.GetPlayersLastFrame(cbxPlayers.ItemIndex));
+        bDone := True;
+    except
+      // do nothing
+    end;
+    until (iTry = 100) oR bDone;
+    if bDone then
+    begin
+      AdvancePlayer;
+      IsGameOver;
+      if gbScoring.Enabled then
+        FocusControl(edNoPins);
+      SendMessage(Memo1.Handle, EM_LINESCROLL, 0,Memo1.Lines.Count);
+    end;
+  end
+  else
   if Length(Trim(edNoPins.Text))>0 then
   begin
     NoPins := StrToIntDef(edNoPins.Text, -1);
@@ -69,18 +104,14 @@ begin
       try
         ATSBowlingGame.AddRoll(cbxPlayers.Text, NoPins);
         edNoPins.Text := '';
-        Memo1.Clear;
-        Memo1.Lines.Text := ATSBowlingGame.GetAllPlayersScores;
+        Memo1.Lines.Add(ATSBowlingGame.GetPlayersLastFrame(cbxPlayers.ItemIndex));
+        //Memo1.Lines.Add(edNoPins.Text);
       finally
-        if ATSBowlingGame.IsCurrentFrameComplete(cbxPlayers.Text) then
-        begin
-          if ((cbxPlayers.ItemIndex+1) = cbxPlayers.Items.Count) then
-            cbxPlayers.ItemIndex := 0
-          else
-            cbxPlayers.ItemIndex := cbxPlayers.ItemIndex+1;
-        end;
+        AdvancePlayer;
+        IsGameOver;
+        if gbScoring.Enabled then
+          FocusControl(edNoPins);
         SendMessage(Memo1.Handle, EM_LINESCROLL, 0,Memo1.Lines.Count);
-        FocusControl(edNoPins);
       end;
     end;
   end;
@@ -96,7 +127,68 @@ begin
    edAddPlayer.Text := '';
    edNoPins.Text := '';
    cbxPlayers.Clear;
+   btnAddPlayer.Default := true;
    FocusControl(edAddPlayer)
+end;
+
+procedure TfrmBowlingGame.btGetAllStatsClick(Sender: TObject);
+begin
+  Memo1.Lines.Text := ATSBowlingGame.GetAllPlayersStats;
+end;
+
+procedure TfrmBowlingGame.edAddPlayerEnter(Sender: TObject);
+begin
+   btnAddPlayer.Default := true;
+   FocusControl(edAddPlayer)
+end;
+
+procedure TfrmBowlingGame.edNoPinsEnter(Sender: TObject);
+begin
+   btnAddPlayer.Default := False;
+   btnAddScore.Default := True;
+   FocusControl(edNoPins);
+end;
+
+procedure TfrmBowlingGame.AdvancePlayer;
+begin
+  if ATSBowlingGame.IsCurrentFrameComplete(cbxPlayers.Text) then
+  begin
+    if ((cbxPlayers.ItemIndex + 1) = cbxPlayers.Items.Count) then
+      cbxPlayers.ItemIndex := 0
+    else
+      cbxPlayers.ItemIndex := cbxPlayers.ItemIndex + 1;
+  end;
+end;
+
+procedure TfrmBowlingGame.IsGameOver;
+var
+  NoGamesOver: Integer;
+  bPlayerGameOver: Boolean;
+begin
+  if ATSBowlingGame.IsGameOver(cbxPlayers.ItemIndex) then
+  begin
+    NoGamesOver := 1;
+    bPlayerGameOver := false;
+    repeat
+      if ((cbxPlayers.ItemIndex + 1) = cbxPlayers.Items.Count) then
+      begin
+        cbxPlayers.ItemIndex := 0;
+        NoGamesOver := 0;
+      end
+      else
+        cbxPlayers.ItemIndex := cbxPlayers.ItemIndex + 1;
+      bPlayerGameOver := ATSBowlingGame.IsGameOver(cbxPlayers.ItemIndex);
+      if bPlayerGameOver then
+        Inc(NoGamesOver);
+      Application.ProcessMessages;
+    until (not bPlayerGameOver) or (NoGamesOver >= (cbxPlayers.Items.Count));
+    if NoGamesOver = (cbxPlayers.Items.Count) then
+    begin
+      edNoPins.Text := 'Game Over';
+      Memo1.Lines.Add(edNoPins.Text);
+      gbScoring.Enabled := False;
+    end;
+  end;
 end;
 
 procedure TfrmBowlingGame.gbAddPlayerExit(Sender: TObject);

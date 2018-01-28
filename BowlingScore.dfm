@@ -1,7 +1,7 @@
 object frmBowlingGame: TfrmBowlingGame
   Left = 0
   Top = 0
-  Caption = 'Bowling for Gateway'
+  Caption = 'Andy Bowling'
   ClientHeight = 419
   ClientWidth = 590
   Color = clBtnFace
@@ -28,7 +28,7 @@ object frmBowlingGame: TfrmBowlingGame
   object Memo1: TMemo
     Left = 33
     Top = 27
-    Width = 385
+    Width = 376
     Height = 374
     Anchors = [akLeft, akTop, akRight, akBottom]
     Lines.Strings = (
@@ -50,9 +50,9 @@ object frmBowlingGame: TfrmBowlingGame
     OnClick = btnNewGameClick
   end
   object gbAddPlayer: TGroupBox
-    Left = 424
+    Left = 415
     Top = 72
-    Width = 158
+    Width = 167
     Height = 97
     Anchors = [akTop, akRight]
     Caption = 'Add Player:'
@@ -68,6 +68,7 @@ object frmBowlingGame: TfrmBowlingGame
       EditLabel.Height = 13
       EditLabel.Caption = '&Name:'
       TabOrder = 0
+      OnEnter = edAddPlayerEnter
     end
     object btnAddPlayer: TButton
       Left = 38
@@ -80,10 +81,10 @@ object frmBowlingGame: TfrmBowlingGame
     end
   end
   object gbScoring: TGroupBox
-    Left = 424
+    Left = 415
     Top = 175
-    Width = 158
-    Height = 162
+    Width = 167
+    Height = 170
     Anchors = [akTop, akRight]
     Caption = 'Scoring:'
     Enabled = False
@@ -106,23 +107,43 @@ object frmBowlingGame: TfrmBowlingGame
     end
     object edNoPins: TLabeledEdit
       Left = 11
-      Top = 93
+      Top = 103
       Width = 132
       Height = 21
       EditLabel.Width = 72
       EditLabel.Height = 13
       EditLabel.Caption = 'Number of &Pins'
-      TabOrder = 1
+      TabOrder = 2
+      OnEnter = edNoPinsEnter
     end
     object btnAddScore: TButton
       Left = 40
-      Top = 120
+      Top = 136
       Width = 75
       Height = 25
       Caption = 'Add &Score'
       Default = True
-      TabOrder = 2
+      TabOrder = 3
       OnClick = btnAddScoreClick
     end
+    object cbxRandom: TCheckBox
+      Left = 99
+      Top = 71
+      Width = 65
+      Height = 26
+      Caption = '&Random'
+      TabOrder = 1
+    end
+  end
+  object btGetAllStats: TButton
+    Left = 455
+    Top = 360
+    Width = 75
+    Height = 25
+    Hint = 'Get all the players stats'
+    Anchors = [akTop, akRight]
+    Caption = 'Get All S&tats'
+    TabOrder = 4
+    OnClick = btGetAllStatsClick
   end
 end
