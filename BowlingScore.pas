@@ -28,6 +28,7 @@ type
     procedure btGetAllStatsClick(Sender: TObject);
     procedure edAddPlayerEnter(Sender: TObject);
     procedure edNoPinsEnter(Sender: TObject);
+    procedure cbxRandomClick(Sender: TObject);
   private
     { Private declarations }
     ATSBowlingGame: IBowlingGame;
@@ -129,6 +130,14 @@ begin
    cbxPlayers.Clear;
    btnAddPlayer.Default := true;
    FocusControl(edAddPlayer)
+end;
+
+procedure TfrmBowlingGame.cbxRandomClick(Sender: TObject);
+var
+  hours, mins, secs, milliSecs : Word;
+begin
+  DecodeTime(now, hours, mins, secs, milliSecs);
+  RandSeed := milliSecs;
 end;
 
 procedure TfrmBowlingGame.btGetAllStatsClick(Sender: TObject);

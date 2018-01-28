@@ -27,12 +27,15 @@ const
   cMaxFrames = 10; // Frames collection starts at "0"
   cDisplayInLine = false;
 type
+    // And explanation of scoring that I can understand
     // https://www.thoughtco.com/bowling-scoring-420895
     // fsDoubleStrikeBonusRoll = two strikes in a row
   TGameState = (fsFirstRoll, fsSecondRoll, fsOpen, fsSpareBonusRoll, fsSpare,
                    fsStrikeBonusFirstRoll, fsStrikeBonusSecondRoll, fsStrike,
-                   fsGameOver,
-                   fsDoubleStrikeBonusRoll);
+                   fsGameOver, fsDoubleStrikeBonusRoll,
+                   fsSpareBonusRollFrame10, fsStrikeBonusFirstRollFrame10,
+                   fsStrikeBonusSecondRollFrame10);
+
   //TFrameState = fsFirstRoll..fsStrike+fsGameOver;
   TFrameState = fsFirstRoll..fsGameOver;
   TRoll = (trFirst=1, trSecond);
@@ -332,19 +335,24 @@ type
       OR ((Frame.State=fsSecondRoll) AND (Frame.Roll[trFirst]+NoPins >10)) then
         raise Exception.CreateFmt('%d for the number of pins out of range', [NoPins]);
 
+//    if (Count=cMaxFrames) AND (Game.State in [ then
+    
     case FGameState of
       fsFirstRoll, fsSecondRoll:
           begin
             Frame.AddRoll(FGameState, NoPins);
           end;
-      fsSpareBonusRoll, fsStrikeBonusFirstRoll:
+      fsSpareBonusRoll:
           begin
             Frame.AddRoll(fsFirstRoll, NoPins);
             Frame := Items[Count-2] as TFrame;
-            case FGameState of
-              fsSpareBonusRoll: Frame.AddRoll(fsSpareBonusRoll, NoPins);
-              fsStrikeBonusFirstRoll: Frame.AddRoll(fsStrikeBonusFirstRoll, NoPins);
-            end;
+            Frame.AddRoll(fsSpareBonusRoll, NoPins);
+          end;
+      fsStrikeBonusFirstRoll:
+          begin
+            Frame.AddRoll(fsFirstRoll, NoPins);
+            Frame := Items[Count-2] as TFrame;
+            Frame.AddRoll(fsStrikeBonusFirstRoll, NoPins);
           end;
       fsStrikeBonusSecondRoll:
         begin
@@ -359,6 +367,9 @@ type
           (Items[Count-2] as TFrame).AddRoll(fsStrikeBonusFirstRoll, NoPins);
           (Items[Count-3] as TFrame).AddRoll(fsStrikeBonusSecondRoll, NoPins);
         end;
+			fsSpareBonusRollFrame10:  Frame.AddRoll(fsSpareBonusRoll, NoPins);
+      fsStrikeBonusFirstRollFrame10: Frame.AddRoll(fsStrikeBonusFirstRoll, NoPins);
+      fsStrikeBonusSecondRollFrame10: Frame.AddRoll(fsStrikeBonusSecondRoll, NoPins);
     end;
     UpdateState;
 
@@ -389,13 +400,6 @@ type
         end;
       fsSpareBonusRoll:
         begin
-          if (Count=cMaxFrames) then
-          begin
-            Frame.State := fsSpare;
-            FGameState := Frame.State;
-            exit;
-          end
-          else
           if Frame.Roll[trFirst]=10 then
             FGameState := fsStrikeBonusFirstRoll
           else
@@ -405,13 +409,6 @@ type
         end;
       fsStrikeBonusFirstRoll:
         begin
-          if (Count=cMaxFrames) then
-          begin
-            Frame.State := fsStrikeBonusSecondRoll;
-            FGameState := Frame.State;
-            exit;
-          end
-          else
           if Frame.Roll[trFirst]=10 then
           begin
             Frame.State := fsStrikeBonusFirstRoll;
@@ -426,13 +423,6 @@ type
         end;
       fsStrikeBonusSecondRoll:
         begin
-          if (Count=cMaxFrames) then
-          begin
-            Frame.State := fsStrike;
-            FGameState := Frame.State;
-            exit;
-          end
-          else
           if Frame.Roll[trFirst]+Frame.Roll[trSecond]=10 then
             FGameState := fsSpareBonusRoll
           else
@@ -455,6 +445,26 @@ type
           (Items[Count-2] as TFrame).State := fsStrikeBonusSecondRoll;
           (Items[Count-3] as TFrame).State := fsStrike;
         end;
+    end;
+
+    // tenth frame fix up
+    if Count=10 then
+    begin
+			case FGameState of
+				fsSpareBonusRoll: FGameState := fsSpareBonusRollFrame10;
+        fsSpareBonusRollFrame10:
+        begin
+          FGameState := fsSpare;
+          Frame.State := fsSpare;
+        end;
+				fsStrikeBonusFirstRoll: FGameState := fsStrikeBonusFirstRollFrame10;
+				fsStrikeBonusFirstRollFrame10: FGameState := fsStrikeBonusSecondRollFrame10;
+        fsStrikeBonusSecondRollFrame10:
+        begin
+          FGameState := fsStrike;
+          Frame.State := FGameState;
+        end;
+      end;
     end;
   end;
 

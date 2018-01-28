@@ -40,7 +40,7 @@ object frmBowlingGame: TfrmBowlingGame
     TabOrder = 3
   end
   object btnNewGame: TButton
-    Left = 462
+    Left = 463
     Top = 41
     Width = 75
     Height = 25
@@ -62,7 +62,7 @@ object frmBowlingGame: TfrmBowlingGame
     object edAddPlayer: TLabeledEdit
       Left = 11
       Top = 32
-      Width = 132
+      Width = 142
       Height = 21
       EditLabel.Width = 31
       EditLabel.Height = 13
@@ -71,7 +71,7 @@ object frmBowlingGame: TfrmBowlingGame
       OnEnter = edAddPlayerEnter
     end
     object btnAddPlayer: TButton
-      Left = 38
+      Left = 48
       Top = 59
       Width = 75
       Height = 25
@@ -98,17 +98,17 @@ object frmBowlingGame: TfrmBowlingGame
       FocusControl = cbxPlayers
     end
     object cbxPlayers: TComboBox
-      Left = 11
+      Left = 14
       Top = 44
-      Width = 132
+      Width = 142
       Height = 21
       ItemHeight = 13
       TabOrder = 0
     end
     object edNoPins: TLabeledEdit
-      Left = 11
+      Left = 14
       Top = 103
-      Width = 132
+      Width = 142
       Height = 21
       EditLabel.Width = 72
       EditLabel.Height = 13
@@ -117,8 +117,8 @@ object frmBowlingGame: TfrmBowlingGame
       OnEnter = edNoPinsEnter
     end
     object btnAddScore: TButton
-      Left = 40
-      Top = 136
+      Left = 48
+      Top = 130
       Width = 75
       Height = 25
       Caption = 'Add &Score'
@@ -133,11 +133,12 @@ object frmBowlingGame: TfrmBowlingGame
       Height = 26
       Caption = '&Random'
       TabOrder = 1
+      OnClick = cbxRandomClick
     end
   end
   object btGetAllStats: TButton
-    Left = 455
-    Top = 360
+    Left = 463
+    Top = 351
     Width = 75
     Height = 25
     Hint = 'Get all the players stats'
