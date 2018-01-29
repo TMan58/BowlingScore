@@ -26,9 +26,9 @@ object frmBowlingGame: TfrmBowlingGame
     FocusControl = Memo1
   end
   object Memo1: TMemo
-    Left = 33
+    Left = 24
     Top = 27
-    Width = 376
+    Width = 385
     Height = 374
     Anchors = [akLeft, akTop, akRight, akBottom]
     Lines.Strings = (
@@ -37,11 +37,11 @@ object frmBowlingGame: TfrmBowlingGame
       'Note: Scoring not completed.'
       'It'#39's not whether you win or lose, it'#39's how you play the game...')
     ScrollBars = ssBoth
-    TabOrder = 3
+    TabOrder = 4
   end
   object btnNewGame: TButton
     Left = 463
-    Top = 41
+    Top = 18
     Width = 75
     Height = 25
     Anchors = [akTop, akRight]
@@ -57,7 +57,7 @@ object frmBowlingGame: TfrmBowlingGame
     Anchors = [akTop, akRight]
     Caption = 'Add Player:'
     Enabled = False
-    TabOrder = 1
+    TabOrder = 2
     OnExit = gbAddPlayerExit
     object edAddPlayer: TLabeledEdit
       Left = 11
@@ -88,7 +88,7 @@ object frmBowlingGame: TfrmBowlingGame
     Anchors = [akTop, akRight]
     Caption = 'Scoring:'
     Enabled = False
-    TabOrder = 2
+    TabOrder = 3
     object Label2: TLabel
       Left = 13
       Top = 27
@@ -144,7 +144,28 @@ object frmBowlingGame: TfrmBowlingGame
     Hint = 'Get all the players stats'
     Anchors = [akTop, akRight]
     Caption = 'Get All S&tats'
-    TabOrder = 4
+    TabOrder = 5
     OnClick = btGetAllStatsClick
+  end
+  object cbxDisplayInSingleLine: TCheckBox
+    Left = 426
+    Top = 49
+    Width = 156
+    Height = 17
+    Anchors = [akTop, akRight]
+    Caption = 'Display frames in single line'
+    TabOrder = 1
+  end
+  object cbxDisplayLastTwoFrames: TCheckBox
+    Left = 426
+    Top = 382
+    Width = 142
+    Height = 17
+    Hint = 'If Previous frame is a Spare or Strike.'
+    Anchors = [akTop, akRight]
+    Caption = 'Display last two frames.'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 6
   end
 end
