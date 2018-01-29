@@ -167,6 +167,8 @@ begin
 end;
 
 procedure TfrmBowlingGame.AdvancePlayer;
+var
+  FrameNo: Integer;
 begin
   if ATSBowlingGame.IsCurrentFrameComplete(cbxPlayers.Text) then
   begin
@@ -174,7 +176,10 @@ begin
       cbxPlayers.ItemIndex := 0
     else
       cbxPlayers.ItemIndex := cbxPlayers.ItemIndex + 1;
-    gbScoring.Caption := Format('Scoring frame: %d', [ATSBowlingGame.GetPlayersCurrentFrameNo(cbxPlayers.Text)+1]);
+    FrameNo := ATSBowlingGame.GetPlayersCurrentFrameNo(cbxPlayers.Text)+1;
+    if FrameNo > 10  then
+        FrameNo := 10;
+    gbScoring.Caption := Format('Scoring frame: %d', [FrameNo]);
   end;
 end;
 

@@ -16,9 +16,7 @@ type
     function IsCurrentFrameComplete(const PlayerName: String): Boolean;
     function IsGameOver(Index: Integer): Boolean;
     function GetPlayerStats(const PlayerName: String): String;
-    // function GetPlayersLastStats(NoFrames, PlayerNo: Integer): String;
     function GetPlayersLastFrameStats(Index: Integer): String;
-    //function GetAllPlayersLastFrameOnly: String;
     function GetAllPlayersStats: String;
     function GetAllPlayersTotals: String;
     procedure SetDisplayLastTwoFrames(Value: Boolean);
