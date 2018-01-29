@@ -11,6 +11,7 @@ type
     ['{6F4E6568-9CEC-4703-A544-1C7ADA4D38F9}']
     procedure StartGame;
     function AddPlayer(const Name: String; DisplayInSingleLine: Boolean): Integer; // index
+    function GetPlayersCurrentFrameNo(const Name: String): Integer; // get the frame the player is playing
     function AddRoll(const PlayerName: String; NoPins: Integer): integer; //frame
     function IsCurrentFrameComplete(const PlayerName: String): Boolean;
     function IsGameOver(Index: Integer): Boolean;
@@ -38,7 +39,6 @@ type
                    fsSpareBonusRollFrame10, fsStrikeBonusFirstRollFrame10,
                    fsStrikeBonusSecondRollFrame10, fsDoubleStrikeBonusRollFrame10);
 
-  //TFrameState = fsFirstRoll..fsStrike+fsGameOver;
   TFrameState = fsFirstRoll..fsGameOver;
   TRoll = (trFirst=1, trSecond);
 
@@ -52,7 +52,6 @@ const
                    fsDoubleStrikeBonusRoll,
                    fsSpareBonusRollFrame10, fsStrikeBonusFirstRollFrame10,
                    fsStrikeBonusSecondRollFrame10]);
-
 
 type
   TFrame = class
@@ -94,7 +93,6 @@ type
       FGameState: TGameState;
       FDisplayInLine: Boolean;
       function GetFrameState(Index: Integer): TFrameState;
-      //function GetFrameStateStr(Index: Integer): String;
       procedure UpdateState;
       function IsCurrentFrameComplete: Boolean;
       function IsGameOver: Boolean;
@@ -117,10 +115,10 @@ type
   TPlayers = class(TStringList)
     private
       FDisplayLastTwoFrames: Boolean;
-//      function GetPlayersLast(NoFrames, PlayerNo: Integer): String;
     public
       procedure Clear; override;
       function AddPlayer(const Name: String; DisplayInSingleLine: Boolean): Integer; //return index
+      function GetPlayersCurrentFrameNo(const Name: String): Integer;
       function AddRoll(const Name: String; NoPins: Integer): integer; // return frame
       function IsPlayerCurrentFrameComplete(const Name: String): Boolean;
       function IsGameOver(Index: Integer): Boolean;
@@ -128,7 +126,6 @@ type
       function GetPlayerStats(const Name: String): String;
       function GetPlayersLastFrameStats(Index: Integer): String; overload;
       function GetPlayersLastFrameStats(const Name: String): String; overload;
-      //function GetAllPlayersLastFrameOnly: String;
       function GetAllPlayersStats: String;
       function GetAllPlayersTotals: String;
     property DisplayLastTwoFrames: Boolean read FDisplayLastTwoFrames write FDisplayLastTwoFrames;
@@ -141,13 +138,12 @@ type
       procedure StartGame;
       procedure SetDisplayLastTwoFrames(Value: Boolean);
       function AddPlayer(const PlayerName: String; DisplayInSingleLine: BOolean): Integer; // return index
+      function GetPlayersCurrentFrameNo(const Player: String): Integer; // current frame number
       function AddRoll(const PlayerName: String; NoPins: Integer): Integer;// return frame;
       function IsCurrentFrameComplete(const PlayerName: String): Boolean;
       function IsGameOver(Index: Integer): Boolean;
       function GetPlayerStats(const PlayerName: String): String;
-      //function GetPlayersLastStats(NoFrames, PlayerNo: Integer): String;
       function GetPlayersLastFrameStats(Index: Integer): String;
-      //function GetAllPlayersLastFrameOnly: String;
       function GetAllPlayersStats: String;
       function GetAllPlayersTotals: String;
   end;
@@ -183,12 +179,10 @@ type
   function TFrame.IsFinalFrameComplete: Boolean;
   begin
     result := FState in [fsSpare, fsStrike, fsOpen];
-    // result := FState in [fsSpareBonusRoll, fsSpare, fsStrikeBonusFirstRoll, fsStrike, fsOpen];
   end;
 
   function TFrame.IsCurrentFrameComplete: Boolean;
   begin
-    // result := FState in [fsSpare, fsStrike, fsOpen];
     result := FState in [fsSpareBonusRoll, fsSpare, fsStrikeBonusFirstRoll, fsStrike, fsOpen];
   end;
 
@@ -213,7 +207,7 @@ type
 
   procedure TFrame.TotalUpFrame;
   begin
-    FFrameTotal := FRoll[1]+FRoll[2]+FBonusROll[1]+FBonusRoll[2];
+    FFrameTotal := FRoll[1]+FRoll[2]+FBonusRoll[1]+FBonusRoll[2];
   end;
 
   function TFrame.GetFrameTotal: Integer;
@@ -249,6 +243,7 @@ type
     inherited;
     FDisplayInLine := DisplayInSingleLine;
   end;
+  
   function TFrames.GetGameState: String;
   begin
     result := GetEnumName(TypeInfo(TGameState), Ord(FGameState));
@@ -258,11 +253,6 @@ type
   begin
     result := (Items[Index] as TFrame).State;
   end;
-
-//  function TFrames.GetFrameStateStr(Index: Integer): String;
-//  begin
-//    result := GetEnumName(TypeInfo(TFrameState), Ord(GetFrameState(Index)));
-//  end;
 
   function TFrames.GetFrameStats(Index: integer): String;
   begin
@@ -333,12 +323,12 @@ type
       begin
         if FDisplayInLine then
           result := Format('%sFrame: %2d %s ',
-                        [result, //  GetGameState, cCrLf,
+                        [result,
                           Succ(t),
                           GetFrameStats(t)])
         else
           result := Format('%sFrame: %d%s%s',
-                      [result, //  GetGameState, cCrLf,
+                      [result,
                         Succ(t), cCrLf,
                         GetFrameStats(t)]);
         TotalScore := TotalScore+GetFrameTotal(t);
@@ -445,7 +435,6 @@ type
       begin
           Frame.AddRoll(fsStrikeBonusFirstRoll, NoPins);
           (Items[Count-2] as TFrame).AddRoll(fsStrikeBonusSecondRoll, NoPins);
-//          (Items[Count-3] as TFrame).AddRoll(fsStrikeBonusSecondRoll, NoPins);
       end;
     end;
     UpdateState;
@@ -560,13 +549,6 @@ type
           (Items[Count-2] as TFrame).State := fsStrike;
         end;
 
-//				fsStrikeBonusFirstRoll: FGameState := fsStrikeBonusFirstRollFrame10;
-//				fsStrikeBonusFirstRollFrame10: FGameState := fsStrikeBonusSecondRollFrame10;
-//        fsStrikeBonusSecondRollFrame10:
-//        begin
-//          FGameState := fsStrike;
-//          Frame.State := FGameState;
-//        end;
       end;
     end;
   end;
@@ -586,6 +568,16 @@ type
       result := AddObject(Name, TFrames.Create(DisplayInSingleLine))
     else
       raise Exception.CreateFmt('Player: [%s] already exists in this game.', [Name]);
+  end;
+
+  function TPlayers.GetPlayersCurrentFrameNo(const Name: String): Integer;
+  var
+    Frames: TFrames;
+  begin
+    if IndexOf(Name) = -1 then
+      raise Exception.CreateFmt('Player: [%s] does not exist.', [Name]);
+    Frames := Objects[IndexOf(Name)] as TFrames;
+    result := Frames.Count;
   end;
 
   function TPlayers.AddRoll(const Name: String; NoPins: Integer): Integer; //frame
@@ -630,29 +622,12 @@ type
     result := (Objects[IndexOf(Name)] as TFrames).GameOver;
   end;
 
-//  function TPlayers.GetPlayersLast(NoFrames, PlayerNo: Integer): String;
-//  var
-//    Frames: TFrames;
-//    Name: String;
-//  begin
-//    Name :=  Strings[PlayerNo];
-//    if IndexOf(Name) = -1 then
-//      raise Exception.CreateFmt('Player: [%s] does not exist.', [Name]);
-//    Frames := Objects[IndexOf(Name)] as TFrames;
-//    result := Format('%s%s%s', [Name, cCrLf, Frames.GetLastFrame])
-//  end;
-
   function TPlayers.GetPlayersLastFrameStats(Index: Integer): String;
   var
-//    Frames: TFrames;
     Name: String;
   begin
     Name :=  Strings[Index];
     result := GetPlayersLastFrameStats(Name);
-//    if IndexOf(Name) = -1 then
-//      raise Exception.CreateFmt('Player: [%s] does not exist.', [Name]);
-//    Frames := Objects[IndexOf(Name)] as TFrames;
-//    result := Format('%s%s%s', [Name, cCrLf, Frames.GetLastFrame])
   end;
 
   function TPlayers.GetPlayersLastFrameStats(const Name: String): String;
@@ -693,16 +668,6 @@ type
       Result := Format('%s%s: %s%s', [result, Strings[i], GetPlayerTotals(Strings[i]), cCrLf]);
     end;
   end;
-//  function TPlayers.GetAllPlayersLastFrameOnly: String;
-//  var
-//    I: Integer;
-//  begin
-//    result := '';
-//    for I := 0 to Count - 1 do
-//    begin
-//      Result := Format('%s%s:%s%s', [result, Strings[i], cCrLf,GetPlayerStatsLastFrame(Strings[i]), cCrLf]);
-//    end;
-//  end;
 
   function TPlayers.IsPlayerCurrentFrameComplete(const Name: string): Boolean;
   begin
@@ -727,6 +692,11 @@ type
   function TBowlingGame.AddPlayer(const PlayerName: String; DisplayInSingleLine: Boolean): Integer;
   begin
     result := FPlayers.AddPlayer(PlayerName, DisplayInSingleLine);
+  end;
+
+  function TBowlingGame.GetPlayersCurrentFrameNo(const Player: string): Integer;
+  begin
+    result := FPlayers.GetPlayersCurrentFrameNo(Player);
   end;
 
   function TBowlingGame.AddRoll(const PlayerName: String; NoPins: Integer): Integer;
@@ -758,19 +728,11 @@ type
   begin
     result := FPlayers.GetAllPlayersTotals;
   end;
-//  function TBowlingGame.GetPlayersLastStats(NoFrames: Integer; PlayerNo: Integer): String;
-//  begin
-//    result := FPlayers.GetPlayersLast(NoFrames, PlayerNo);
-//  end;
 
   function TBowlingGame.GetPlayersLastFrameStats(Index: Integer): String;
   begin
     result := FPlayers.GetPlayersLastFrameStats(Index);
   end;
-//  function TBowlingGame.GetAllPlayersLastFrameOnly: String;
-//  begin
-//    result := FPlayers.GetAllPlayersLastFrameOnly;
-//  end;
 
   function BowlingGame: IBowlingGame;
   begin

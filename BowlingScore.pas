@@ -60,7 +60,6 @@ begin
     cbxPlayers.ItemIndex := iIndex;
     gbScoring.Enabled := True;
   end;
-
 end;
 
 procedure TfrmBowlingGame.btnAddScoreClick(Sender: TObject);
@@ -112,7 +111,6 @@ begin
         ATSBowlingGame.AddRoll(cbxPlayers.Text, NoPins);
         edNoPins.Text := '';
         Memo1.Lines.Add(ATSBowlingGame.GetPlayersLastFrameStats(cbxPlayers.ItemIndex));
-        //Memo1.Lines.Add(edNoPins.Text);
       finally
         AdvancePlayer;
         IsGameOver;
@@ -151,6 +149,8 @@ procedure TfrmBowlingGame.btGetAllStatsClick(Sender: TObject);
 begin
   ATSBowlingGame.SetDisplayLastTwoFrames(cbxDisplayLastTwoFrames.Checked);
   Memo1.Lines.Text := ATSBowlingGame.GetAllPlayersStats;
+  Memo1.Lines.Add('Player totals:');
+  Memo1.Lines.Add(ATSBowlingGame.GetAllPlayersTotals);
 end;
 
 procedure TfrmBowlingGame.edAddPlayerEnter(Sender: TObject);
@@ -174,6 +174,7 @@ begin
       cbxPlayers.ItemIndex := 0
     else
       cbxPlayers.ItemIndex := cbxPlayers.ItemIndex + 1;
+    gbScoring.Caption := Format('Scoring frame: %d', [ATSBowlingGame.GetPlayersCurrentFrameNo(cbxPlayers.Text)+1]);
   end;
 end;
 
@@ -203,6 +204,7 @@ begin
     begin
       edNoPins.Text := 'Game Over';
       Memo1.Lines.Add(edNoPins.Text);
+      Memo1.Lines.Add(Format('%sPlayer totals:', [#$0D#$0A]));
       Memo1.Lines.Add(ATSBowlingGame.GetAllPlayersTotals);
       gbScoring.Enabled := False;
     end;
@@ -212,6 +214,7 @@ end;
 procedure TfrmBowlingGame.gbAddPlayerExit(Sender: TObject);
 begin
   cbxPlayers.ItemIndex := 0;
+  gbScoring.Caption := Format('Scoring frame: %d', [ATSBowlingGame.GetPlayersCurrentFrameNo(cbxPlayers.Text)+1]);
   if gbScoring.Enabled then
     FocusControl(edNoPins);
 end;
